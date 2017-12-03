@@ -1,0 +1,27 @@
+{
+  "name": "latex-shape-completion",
+  "main": "./lib/latex-shape-completion",
+  "version": "0.0.0",
+  "description": "A short description of your package",
+  "keywords": [
+    "TeX", "LaTeX", "Beamer", "completion", "text"
+  ],
+  "activationCommands": {
+    "atom-workspace": "latex-shape-completion:toggle"
+  },
+  "activationHooks": ["language-latex:grammar-used"],
+  "repository": "https://github.com/konn/latex-shape-completion",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "dependencies": {
+  },
+  "consumedServices": {
+      "snippets": {
+          "versions": {
+              "^0.1.0": "consumeSnippets"
+          }
+      }
+  }
+}

@@ -1,0 +1,10 @@
+"atom-text-editor[data-grammar~='latex']":
+  ":": "latex-shape-completion:complete-greek"
+  ";": "latex-shape-completion:complete-shape"
+  "@": "latex-shape-completion:complete-font"
+  "ctrl-c b":  "latex-shape-completion:insert-begin"
+  "ctrl-c s":  "latex-shape-completion:complete-section"
+  "ctrl-c m":  "latex-shape-completion:complete-maketitle"
+  "ctrl-c c":  "latex-shape-completion:change"
+  "ctrl-c k":  "latex-shape-completion:kill-tex"
+  "backspace": "latex-shape-completion:backspace"

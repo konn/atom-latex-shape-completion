@@ -1,0 +1,26 @@
+{
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "Toggle latex-shape-completion",
+        "command": "latex-shape-completion:toggle"
+      }
+    ]
+  },
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "latex-shape-completion",
+          "submenu": [
+            {
+              "label": "Toggle",
+              "command": "latex-shape-completion:toggle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
