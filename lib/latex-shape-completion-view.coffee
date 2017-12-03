@@ -1,15 +1,31 @@
 { $, $$, SelectListView } = require 'atom-space-pen-views'
+_ = require 'underscore-plus'
+
 module.exports =
 class CompletionView extends SelectListView
     panel: null
     callback: null
     spaced: false
     lastItem: null
+    fallback: null
+    withEnter: false
 
-    initialize: (callback) ->
+    initialize: (items, fallback, callback) ->
         super()
+        its = _.deepClone(items)
+        for i in its
+            i.stroke ?= i.name
+              
+        @setItems its
+        @fallback = fallback
         @callback = callback
         @addClass('atex-completion-view overlay popover')
+        @filterEditorView.on 'keydown', (e) =>
+            if e.keyCode is 13
+                @withEnter = true
+            else
+                e.abortKeyBinding?()
+    
         @filterEditorView.on 'keypress', (e) =>
             item = @getSelectedItem()
             if e.charCode is 32
@@ -21,7 +37,7 @@ class CompletionView extends SelectListView
                 else
                   @cancel()
             else
-                e.abortKeyBinding()
+                e.abortKeyBinding?()
 
     getFilterKey: -> 'stroke'
 
@@ -35,6 +51,7 @@ class CompletionView extends SelectListView
     hide: -> @panel?.hide()
 
     clearText: ->
+        @withEnter = false
         @filterEditorView.setText('')
 
     viewForItem: (item) ->
@@ -52,6 +69,12 @@ class CompletionView extends SelectListView
         @spaced = false
         @hide()
         @restoreFocus()
+
+    cancel: ->
+        text = @filterEditorView.getText()
+        if @withEnter && text && @fallback?
+            @fallback text
+        super()
 
     cancelled: ->
         @clearText()
