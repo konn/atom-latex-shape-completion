@@ -16,6 +16,8 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
+      "atom-space-pen-views": "^2.2.0",
+    "underscore-plus": "1.x"
   },
   "consumedServices": {
       "snippets": {

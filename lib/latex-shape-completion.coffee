@@ -1,10 +1,14 @@
 { Disposable, CompositeDisposable } = require 'atom'
+CompletionView = require './latex-shape-completion-view'
+_ = require 'underscore-plus'
 
 module.exports = LaTeXShapeCompletion =
   subscriptions: null
   completer:     null
   completing:    false
-  
+  completionView: null
+  disposeDisposer: -> return
+
   insertSnippet: (snippet, editor, cursor = editor.getLastCursor()) ->
     atom.notifications.addInfo("No snippet service available")
 
@@ -14,80 +18,171 @@ module.exports = LaTeXShapeCompletion =
       insertSnippet(snippet, editor, cursor)
 
   greek_dictionary:
-    'a':    '\\alpha'
-    'b':    '\\beta'
-    'g':    '\\gamma'
-    'd':    '\\delta'
-    'e':    '\\varepsilon'
-    'e-':   '\\epsilon'
-    'et':   '\\eta'
-    'z':    '\\zeta'
-    't':    '\\tau'
-    'th':   '\\theta'
-    'th-':  '\\vartheta'
-    'i':    '\\iota'
-    'k':    '\\kappa'
-    'l':    '\\lambda'
-    'm':    '\\mu'
-    'n':    '\\nu'
-    'x':    '\\xi'
-    'o':    '\\omega'
-    'p':    '\\pi'
-    'ph':   '\\varphi'
-    'ph-':  '\\phi'
-    'p-':   '\\varpi'
-    'ps':   '\\psi'
-    'r':    '\\rho'
-    's':    '\\sigma'
-    's-':   '\\varsigma'
-    'u':    '\\upsilon'
-    'c':    '\\chi'
+    'a':    {name: 'alpha', preview: 'α'}
+    'b':    {name: 'beta', preview: 'β'}
+    'g':    {name: 'gamma', preview: 'γ'}
+    'd':    {name: 'delta', preview: 'δ'}
+    'e':    {name: 'varepsilon', preview: 'ε'}
+    'e-':   {name: 'epsilon', preview: 'ϵ'}
+    'et':   {name: 'eta', preview: 'η'}
+    'z':    {name: 'zeta', preview: 'ζ'}
+    't':    {name: 'tau', preview: 'τ'}
+    'th':   {name: 'theta', preview: 'θ'}
+    'th-':  {name: 'vartheta', preview: 'ϑ'}
+    'i':    {name: 'iota', preview: 'ι'}
+    'k':    {name: 'kappa', preview: 'κ'}
+    'l':    {name: 'lambda', preview: 'λ'}
+    'm':    {name: 'mu', preview: 'μ'}
+    'n':    {name: 'nu', preview: 'ν'}
+    'x':    {name: 'xi', preview: 'ξ'}
+    'o':    {name: 'omega', preview: 'ω'}
+    'p':    {name: 'pi', preview: 'π'}
+    'ph':   {name: 'varphi', preview: 'φ'}
+    'ph-':  {name: 'phi', preview: 'ϕ'}
+    'p-':   {name: 'varpi', preview: 'ϖ'}
+    'ps':   {name: 'psi', preview: 'ψ'}
+    'r':    {name: 'rho', preview: 'ρ'}
+    's':    {name: 'sigma', preview: 'σ'}
+    's-':   {name: 'varsigma', preview: 'ς'}
+    'u':    {name: 'upsilon', preview: 'υ'}
+    'c':    {name: 'chi', preview: 'χ'}
 
   shape_dictionary:
-    '|\\|': '\\aleph'
-    '||-' : '\\Vdash'
-    '/\\':  '\\land'
-    '\\/':  '\\lor'
-    'prod': '\\prod'
+    '|\\|': {name: 'aleph', preview: 'ℵ'}
+    ']':    {name: 'beth', preview: 'ℶ'}
+    '||-' : {name: 'Vdash', preview: '⊩'}
+    '/\\':  {name: 'land', preview: '∧'}
+    '\\/':  {name: 'lor', preview: '∨'}
+    'prod': {name: 'prod', preview: '∏'}
+    'sum':  {name: 'sum', preview: '∑'}
+    '{':    {name: 'in', preview: '∈'}
+    '}':    {name: 'ni', preview: '∋'}
+    '{/':   {name: 'notin', preview: '∉'}
+    '(':    {name: 'subset', preview: '⊂'}
+    '(-':   {name: 'subseteq', preview: '⊆'}
+    '(=':   {name: 'subseteqq', preview: '⫅'}
+    ')':    {name: 'supset', preview: '⊃'}
+    ')-':   {name: 'supseteq', preview: '⊇'}
+    ')=':   {name: 'supseteqq', preview: '⫆'}
+    '=/':   {name: 'neq', preview: '≠'}
+    '==':   {name: 'equiv', preview: '≡'}
+    '==/':  {name: 'nequiv', preview: '≢'}
+    '<':    {name: 'leq', preview: '≤'}
+    '</':   {name: 'nleq', preview: '≰'}
+    '>':    {name: 'geq', preview: '≥'}
+    '>/':   {name: 'ngeq', preview: '≱'}
+    '<<':   {name: 'll', preview: '≪'}
+    '>>':   {name: 'ngeq', preview: '≫'}
+    '<\'':  {name: 'langle', preview: '⟨'}
+    '>\'':  {name: 'rangle', preview: '⟩'}
+    '->':   {name: 'rightarrow', preview: '→'}
+    '=>':   {name: 'Rightarrow', preview: '⇒'}
+    '==>':   {name: 'implies', preview: '⟹'}
+    '-->':  {name: 'longrightarrow', preview: '⟶'}
+    'x->':  {name: 'xrightarrow',preview: '⟶^_',type: 'section',args: ['optional', 'fixed']}
+    '|->':  {name: 'mapsto', preview: '↦'}
+    '|=>':  {name: 'Mapsto', preview: '↦'}
+    '>->':  {name: 'rightarrowtail', preview: '↣'}
+    '->>':  {name: 'twoheadrightarrow', preview: '↠'}
+    '(->':  {name: 'hookrightarrow', preview: '↪'}
+    '~>':   {name: 'leadsto', preview: '⇝'}
+    '<-':  {name: 'leftarrow', preview: '←'}
+    '<<-':  {name: 'twoheadleftarrow', preview: '↞'}
+    '<-<':  {name: 'leftarrowtail', preview: '↢'}
+    '<-)':  {name: 'hookleftarrow', preview: '↩'}
+    '<-|':  {name: 'mapsfrom', preview: '↤'}
+    '<=|':  {name: 'Mapsfrom', preview: '⤆'}
+    '<--':  {name: 'longleftarrow', preview: '⟵'}
+    '<=':   {name: 'Leftarrow', preview: '⟵'}
+    '<==':   {name: 'impliedby', preview: '⟸'}
 
   font_dictionary:
+    'i': {type: 'section', name: 'mathit'}
+    'r': {type: 'section', name: 'mathrm'}
+    'd': {type: 'section', name: 'mathds'}
     'b': {type: 'section', name: 'mathbb'}
     'c': {type: 'section', name: 'mathcal'}
-    's': {type: 'section', name: 'mathscr'}
+    's': {type: 'section', name: 'mathsf'}
+    'S': {type: 'section', name: 'mathscr'}
     'B': {type: 'section', name: 'mathbf'}
     'f': {type: 'section', name: 'mathfrak'}
 
-  insert: (inp, editor) ->
+  buildSectionSnippet: ({name, args}, def = null) ->
+    counter = 1;
+    snip = "\\\\#{name}"
+    args ?= ["fixed"]
+    for type in args
+        switch type
+          when 'fixed'
+            if def?
+                snip += "{${#{counter}:#{def}}}"
+                def = null
+            else
+                snip += "{${#{counter}:arg}}"
+            counter += 1
+          when 'optional'
+            snip += "${#{counter}:[${#{counter+1}:arg}]}"
+            counter += 2
+    snip += "$0"
+    return snip
+
+  buildEnvSnippet: ({name, args}, def = null) ->
+    counter = 1;
+    def ?= ""
+    snip = "\\\\begin{#{name}}"
+    args ?= []
+    for type in args
+        switch type
+          when 'fixed'
+            snip += "{${#{counter}:arg}}"
+            counter += 1
+          when 'optional'
+            snip += "${#{counter}:[${#{counter+1}:arg}]}"
+            counter += 2
+    snip += "\n  #{def}$0\n"
+    snip += "\\\\end{#{name}}"
+    return snip
+
+  insert: (inp, editor, spaced = false) ->
     type = Object.prototype.toString.call(inp).slice(8, -1).toLowerCase()
+    ph = sel if sel = editor.getSelectedText()
+
+    if spaced
+        pad = ' '
+    else
+        pad = ''
+
     if (typeof(inp) == 'string' || inp instanceof String || type == 'string')
         editor.insertText(inp)
         return false
     else
+      inp.type ?= 'maketitle'
       switch inp?.type
+        when 'text'
+            text = "#{inp.name}#{pad}"
+            editor.insertText(text)
+            return false
         when 'maketitle'
-            editor.insertText("\\" + inp.name)
+            text = "\\#{inp.name}#{pad}"
+            editor.insertText(text)
             return false
         when 'section'
-            @insertSnippet("\\\\" + inp.name + "{${1:text}}$0", editor)
+            snip = @buildSectionSnippet(inp, ph)
+            @insertSnippet(snip, editor)
             return true
         when 'large'
-            @insertSnippet("{\\\\" + inp.name + " $0}", editor)
+            if (ph = editor.getSelectedText())
+                editor.insertText "{\\#{inp.name} #{ph}}"
+            else
+                @insertSnippet("{\\\\#{inp.name} $0}", editor)
             return true
         when 'begin'
-            @insertSnippet """
-                           \\\\begin{${1:theorem}}
-                             $0
-                           \\\\end{$1}
-                           """,
-                           editor
+            @insertSnippet @buildEnvSnippet(inp, ph), editor
             return true
-        else
-            throw "Unknown Error"
-                
-        
-        
 
   activate: (state) ->
+    editor = atom.workspace.getActiveTextEditor()
+
     # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
     @subscriptions = new CompositeDisposable
 
@@ -102,10 +197,15 @@ module.exports = LaTeXShapeCompletion =
       'latex-shape-completion:change': => @change(),
       'latex-shape-completion:kill-tex': => @kill_tex(),
       'latex-shape-completion:backspace': (e) => @backspace e
+      'latex-shape-completion:display-math': => @display_math()
           
-    editor = atom.workspace.getActiveTextEditor()
+          
     editor?.onDidChangeCursorPosition => @dispose_completer()
     editor?.onDidChangeSelectionRange => @dispose_completer()
+
+  display_math: ->
+    editor = atom.workspace.getActiveTextEditor()
+    @insertSnippet "\\\\[\n  $0\n\\\\]", editor
 
   completion_name: "latex-shape-completion.completion"
 
@@ -125,12 +225,20 @@ module.exports = LaTeXShapeCompletion =
       while key.length > 0
         targ = targ[key[0]] ?= {value: null, children: null}
         if key.length == 1
-          targ.value = val
+          targ.value = _.deepClone(val)
         else
-          targ.value ?= val
+          targ.value ?= _.deepClone(val)
           targ = targ.children ?= {}
         key = key.slice(1)
     return trie               
+
+  build_items: (dic) ->
+    items = []
+    for key, val of dic
+        val_ = _.deepClone(val)
+        val_.stroke = key
+        items.push val_
+    return items
 
   dispose_completer: ->
     if @completer
@@ -138,58 +246,6 @@ module.exports = LaTeXShapeCompletion =
       view = atom.views.getView editor
       view.removeEventListener 'keypress', @completer
       @completer = null
-
-  catch_next_key_with: (dic, ign = null, mark = null, prev = []) ->
-    editor = atom.workspace.getActiveTextEditor()
-    view = atom.views.getView editor
-    disposeDisposer = editor?.onDidChangeCursorPosition (e) =>
-        atom.beep()
-        @dispose_completer()
-    @completer = (evt) =>
-      char = String.fromCharCode(evt.charCode)
-      l = dic?[char]
-      evt.stopImmediatePropagation()
-      evt.preventDefault()
-      @dispose_completer()
-      disposeDisposer.dispose()
-      console.log('Input: ' + JSON.stringify([char, dic, mark, prev, evt.charCode]));
-
-      if ign && String(char) == String(ign)
-        @insert(ign, editor)
-      else if evt.charCode == 127
-        if (prev?.length > 0)
-            if mark
-                editor.setTextInBufferRange mark, '', undo: 'skip'
-            mark_ = null
-            [_, dic_] = prev.shift()
-            psymb = prev[0]?[0]
-            if psymb
-                start = editor.getCursorBufferPosition()
-                @insert(psymb, editor)
-                end   = editor.getCursorBufferPosition()
-                mark_ = [start,end]
-            @catch_next_key_with dic_, null, mark_, prev
-        else
-            atom.beep()
-      else if (!l) || l == undefined || l == null
-        atom.beep()
-        @insert(char, editor)
-      else
-        mark_ = null
-        isSnippet = false
-        if symb = l.value
-          if mark
-            editor.setTextInBufferRange mark, '', undo: 'skip'
-          start = editor.getCursorBufferPosition()
-          isSnippet = @insert(symb, editor)
-          end   = editor.getCursorBufferPosition()
-          mark_ = [start,end]
-          atom.workspace.add
-        unless isSnippet
-          prev.unshift [symb, dic]
-          @catch_next_key_with l.children, null, mark_, prev
-
-    view.addEventListener 'keypress', @completer
 
   deactivate: ->
     @subscriptions.dispose()
@@ -222,10 +278,17 @@ module.exports = LaTeXShapeCompletion =
   make_completer: (trigger, dic, e) ->
     editor = atom.workspace.getActiveTextEditor()
     if @is_math() && ! @completer
-      @catch_next_key_with(@build_trie(dic), trigger)
+        @completionView ?= new CompletionView (inp, spaced = false) =>
+            @insert(inp, editor, spaced)
+        @completionView.show()
+        items = @build_items(dic)
+        items.unshift {stroke: trigger, type: "text", name: trigger}
+        @completionView.setItems items
+        @completionView.focusFilterEditor()
+        # @catch_next_key_with(@build_trie(dic), trigger)
     else
-      @dispose_completer()
-      e.abortKeyBinding()
+        @dispose_completer()
+        e.abortKeyBinding()
 
   complete_shape: (e) -> @make_completer ";", @shape_dictionary, e
 
