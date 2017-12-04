@@ -61,7 +61,7 @@ shape_dictionary = [
     {index: '=>', name: 'Rightarrow', preview: '⇒'}
     {index: '==>', name: 'implies', preview: '⟹'}
     {index: '-->', name: 'longrightarrow', preview: '⟶'}
-    {index: 'x->', name: 'xrightarrow',preview: '⟶^_',type: 'section',args: ['optional', 'fixed']}
+    {index: 'x->', name: 'xrightarrow',preview: '⟶^_',type: 'section',args: [{type: 'optional'}, {type: 'fixed'}]}
     {index: '|->', name: 'mapsto', preview: '↦'}
     {index: '|=>', name: 'Mapsto', preview: '↦'}
     {index: '>->', name: 'rightarrowtail', preview: '↣'}
@@ -80,11 +80,12 @@ shape_dictionary = [
   ]
 
 section_dictionary = [
+    {name: 'documentclass', args: [{type: "optional", default: "a4j"}, {type: "fixed", default: "jsarticle"}]}
     {name: 'section'}
     {name: 'section*'}
     {name: 'subsection'}
     {name: 'subsection*'}
-    {name: 'usepackage', args: ["optional", "fixed"]}
+    {name: 'usepackage', args: [{type: "optional"}, {type: "fixed"}]}
     {name: 'mathit'}  
     {name: 'mathrm'}  
     {name: 'mathds'}  
@@ -100,17 +101,17 @@ section_dictionary = [
 envrionment_dictionary = [
     {name: 'align'}
     {name: 'align*'}
-    {name: 'aligned', args: ['optional']}
-    {name: 'alignat', args: ['fixed']}
-    {name: 'alignat*', args: ['fixed']}
-    {name: 'alignedat', args: ['optional', 'fixed']}
+    {name: 'aligned', args: [type: 'optional']}
+    {name: 'alignat', args: [type: 'fixed']}
+    {name: 'alignat*', args: [type: 'fixed']}
+    {name: 'alignedat', args: [{type: 'optional'}, {type: 'fixed'}]}
     {name: 'split'}
     {name: 'cases'}
   ]
 
 maketitle_dictionary = [
     {name: 'maketitle'}
-    {name: 'printbibliography', args: ['optional']}
+    {name: 'printbibliography', args: [type: 'optional']}
   ]
 
 commandType =
@@ -125,11 +126,17 @@ commandType =
     ]
 
 argumentSpec =
-    type: 'string'
-    enum: [
-        {value: 'fixed', description: 'Fixed argument embraced in {}'}
-        {value: 'optional', description: 'Optional argument embraced in [], which can be omitted'}
-    ]
+    type: 'object'
+    properties:
+        type:
+            type: 'string'
+            enum: [
+                {value: 'fixed', description: 'Fixed argument embraced in {}'}
+                {value: 'optional', description: 'Optional argument embraced in [], which can be omitted'}
+            ]
+        default:
+            type: 'string'
+    required: ['type']
 
 itemSpec =
     type: 'object'
@@ -147,6 +154,10 @@ itemSpec =
         type: 'array'
         description: 'argument type.'
         items: argumentSpec
+      postfix:
+        type: 'string'
+        description: 'postfix for command'
+        default: ''
       type: commandType
     required: ['name']
 

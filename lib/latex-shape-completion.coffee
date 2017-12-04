@@ -16,25 +16,33 @@ module.exports = LaTeXShapeCompletion =
     @insertSnippet = (snippet, editor = atom.workspace.getActiveTextEditor(), cursor = editor.getLastCursor()) ->
       insertSnippet(snippet, editor, cursor)
 
-  buildSectionSnippet: ({name, args}, def = @getSelected()) ->
+  buildSectionSnippet: ({name, args, postfix}, def = @getSelected()) ->
     counter = 1;
     unless name?
       name = "${1:cmd}"
       counter += 1;
     snip = "\\\\#{name}"
     args ?= ["fixed"]
-    for type in args
+    for arg in args
+        if @isString(arg)
+            type = arg
+        else
+            type = arg.type
+            plhd = arg.default
+        plhd ?= "arg"
+
         switch type
           when 'fixed'
             if def?
                 snip += "{${#{counter}:#{def}}}"
                 def = null
             else
-                snip += "{${#{counter}:arg}}"
+                snip += "{${#{counter}:#{plhd}}}"
             counter += 1
           when 'optional'
-            snip += "${#{counter}:[${#{counter+1}:arg}]}"
+            snip += "${#{counter}:[${#{counter+1}:#{plhd}}]}"
             counter += 2
+    snip += postfix if postfix?
     snip += "$0"
     return snip
 
