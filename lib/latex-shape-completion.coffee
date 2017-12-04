@@ -70,12 +70,7 @@ module.exports = LaTeXShapeCompletion =
     return (typeof(inp) is 'string' || inp instanceof String || type is 'string')
     
 
-  insert: (inp, editor = atom.workspace.getActiveTextEditor(), spaced = false) ->
-    if spaced
-        pad = ' '
-    else
-        pad = ''
-
+  insert: (inp, editor = atom.workspace.getActiveTextEditor(), postfix = "") ->
     if @isString(inp)
         editor.insertText(inp)
         return false
@@ -83,12 +78,12 @@ module.exports = LaTeXShapeCompletion =
       inp.type ?= 'maketitle'
       switch inp?.type
         when 'text'
-            text = "#{inp.name}#{pad}"
+            text = "#{inp.name}#{postfix}"
             editor.insertText(text)
             return false
         when 'maketitle'
             if inp.name?
-                editor.insertText "\\#{inp.name}#{pad}"
+                editor.insertText "\\#{inp.name}#{postfix}"
             else
                 @insertSnippet "\\\\${1:maketitle} $0", editor
             return false
@@ -143,7 +138,7 @@ module.exports = LaTeXShapeCompletion =
     items = []
     for key, val of dic
         val_ = _.deepClone(val)
-        val_.stroke = key
+        val_.index = key
         items.push val_
     return items
 
@@ -184,13 +179,23 @@ module.exports = LaTeXShapeCompletion =
     @completionView.focusFilterEditor()
 
 
-  make_completer: (trigger, dic, e) ->
+  make_stroke_completer: (trigger, dic, e) ->
     editor = atom.workspace.getActiveTextEditor()
+    view = atom.views.getView editor
     if @is_math()
         items = _.deepClone(dic)
-        items.unshift {stroke: trigger, type: "text", name: trigger}
-        @show_completion_view items, null, (inp, spaced = false) =>
-            @insert(inp, editor, spaced)
+        fallback = ({text, lastItem, lastChar}) =>
+            if (lastChar is trigger) && (text is trigger || text.legth is 0)
+                editor.insertText(trigger)
+            else
+                editor.transact () =>
+                    @insert(lastItem, editor, "")
+                    evt = atom.keymaps.constructor.buildKeydownEvent(lastChar, {target: view})
+                    if view.dispatchEvent(evt)
+                        editor.insertText(lastChar) 
+            return true
+        callback = (inp, postfix = "") => @insert(inp, editor, postfix)
+        @show_completion_view items, fallback, callback
     else
         e.abortKeyBinding()
 
@@ -199,22 +204,26 @@ module.exports = LaTeXShapeCompletion =
     items = _.deepClone(dic)
     for key, val of items
         val.type = type
-    fallback = (inp, spaced = false) =>
-      if inp.length > 0
-        @insert({type: type, name: inp}, editor, false)
-    callback = (inp, spaced = false) =>
-      @insert(inp, editor, spaced)
+    fallback = ({text, lastItem, lastChar}) =>
+      console.log("falling back with: #{JSON.stringify({text, lastItem: lastItem, lastChar: lastChar})}")
+      if text?.length > 0 && (lastChar is "\r" || lastChar is " ")
+        @insert({type: type, name: text}, editor, "")
+        return true
+      else
+        return false
+    callback = (inp, postfix = "") =>
+      @insert(inp, editor, postfix)
 
     @show_completion_view items, fallback, callback
 
   get_dictionary: (name) ->
     atom.config.get("latex-shape-completion.#{name}_dictionary")
 
-  complete_shape: (e) -> @make_completer ";", @get_dictionary("shape") , e
+  complete_shape: (e) -> @make_stroke_completer ";", @get_dictionary("shape") , e
 
-  complete_greek: (e) -> @make_completer ":", @get_dictionary("greek") , e
+  complete_greek: (e) -> @make_stroke_completer ":", @get_dictionary("greek") , e
 
-  complete_font: (e) -> @make_completer "@", @get_dictionary("font"), e
+  complete_font: (e) -> @make_stroke_completer "@", @get_dictionary("font"), e
 
   complete_section: (e) -> @make_snippet_completer 'section', @get_dictionary("section"), e
 

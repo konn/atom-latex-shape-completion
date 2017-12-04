@@ -1,82 +1,82 @@
 greek_dictionary = [
-    {stroke: 'a', name: 'alpha', preview: 'α'}
-    {stroke: 'b', name: 'beta', preview: 'β'}
-    {stroke: 'g', name: 'gamma', preview: 'γ'}
-    {stroke: 'd', name: 'delta', preview: 'δ'}
-    {stroke: 'e', name: 'varepsilon', preview: 'ε'}
-    {stroke: 'e-', name: 'epsilon', preview: 'ϵ'}
-    {stroke: 'et', name: 'eta', preview: 'η'}
-    {stroke: 'z', name: 'zeta', preview: 'ζ'}
-    {stroke: 't', name: 'tau', preview: 'τ'}
-    {stroke: 'th', name: 'theta', preview: 'θ'}
-    {stroke: 'th-', name: 'vartheta', preview: 'ϑ'}
-    {stroke: 'i', name: 'iota', preview: 'ι'}
-    {stroke: 'k', name: 'kappa', preview: 'κ'}
-    {stroke: 'l', name: 'lambda', preview: 'λ'}
-    {stroke: 'm', name: 'mu', preview: 'μ'}
-    {stroke: 'n', name: 'nu', preview: 'ν'}
-    {stroke: 'x', name: 'xi', preview: 'ξ'}
-    {stroke: 'o', name: 'omega', preview: 'ω'}
-    {stroke: 'p', name: 'pi', preview: 'π'}
-    {stroke: 'ph', name: 'varphi', preview: 'φ'}
-    {stroke: 'ph-', name: 'phi', preview: 'ϕ'}
-    {stroke: 'p-', name: 'varpi', preview: 'ϖ'}
-    {stroke: 'ps', name: 'psi', preview: 'ψ'}
-    {stroke: 'r', name: 'rho', preview: 'ρ'}
-    {stroke: 's', name: 'sigma', preview: 'σ'}
-    {stroke: 's-', name: 'varsigma', preview: 'ς'}
-    {stroke: 'u', name: 'upsilon', preview: 'υ'}
-    {stroke: 'c', name: 'chi', preview: 'χ'}
+    {index: 'a', name: 'alpha', preview: 'α'}
+    {index: 'b', name: 'beta', preview: 'β'}
+    {index: 'g', name: 'gamma', preview: 'γ'}
+    {index: 'd', name: 'delta', preview: 'δ'}
+    {index: 'e', name: 'varepsilon', preview: 'ε'}
+    {index: 'e-', name: 'epsilon', preview: 'ϵ'}
+    {index: 'et', name: 'eta', preview: 'η'}
+    {index: 'z', name: 'zeta', preview: 'ζ'}
+    {index: 't', name: 'tau', preview: 'τ'}
+    {index: 'th', name: 'theta', preview: 'θ'}
+    {index: 'th-', name: 'vartheta', preview: 'ϑ'}
+    {index: 'i', name: 'iota', preview: 'ι'}
+    {index: 'k', name: 'kappa', preview: 'κ'}
+    {index: 'l', name: 'lambda', preview: 'λ'}
+    {index: 'm', name: 'mu', preview: 'μ'}
+    {index: 'n', name: 'nu', preview: 'ν'}
+    {index: 'x', name: 'xi', preview: 'ξ'}
+    {index: 'o', name: 'omega', preview: 'ω'}
+    {index: 'p', name: 'pi', preview: 'π'}
+    {index: 'ph', name: 'varphi', preview: 'φ'}
+    {index: 'ph-', name: 'phi', preview: 'ϕ'}
+    {index: 'p-', name: 'varpi', preview: 'ϖ'}
+    {index: 'ps', name: 'psi', preview: 'ψ'}
+    {index: 'r', name: 'rho', preview: 'ρ'}
+    {index: 's', name: 'sigma', preview: 'σ'}
+    {index: 's-', name: 'varsigma', preview: 'ς'}
+    {index: 'u', name: 'upsilon', preview: 'υ'}
+    {index: 'c', name: 'chi', preview: 'χ'}
   ]
 
 shape_dictionary = [
-    {stroke: '|\\|', name: 'aleph', preview: 'ℵ'}
-    {stroke: ']', name: 'beth', preview: 'ℶ'}
-    {stroke: '||-', name: 'Vdash', preview: '⊩'}
-    {stroke: '/\\', name: 'land', preview: '∧'}
-    {stroke: '\\/', name: 'lor', preview: '∨'}
-    {stroke: 'prod', name: 'prod', preview: '∏'}
-    {stroke: 'sum', name: 'sum', preview: '∑'}
-    {stroke: '{', name: 'in', preview: '∈'}
-    {stroke: '}', name: 'ni', preview: '∋'}
-    {stroke: '{/', name: 'notin', preview: '∉'}
-    {stroke: '(', name: 'subset', preview: '⊂'}
-    {stroke: '(-', name: 'subseteq', preview: '⊆'}
-    {stroke: '(=', name: 'subseteqq', preview: '⫅'}
-    {stroke: ')', name: 'supset', preview: '⊃'}
-    {stroke: ')-', name: 'supseteq', preview: '⊇'}
-    {stroke: ')=', name: 'supseteqq', preview: '⫆'}
-    {stroke: '=/', name: 'neq', preview: '≠'}
-    {stroke: '==', name: 'equiv', preview: '≡'}
-    {stroke: '==/', name: 'nequiv', preview: '≢'}
-    {stroke: '<', name: 'leq', preview: '≤'}
-    {stroke: '</', name: 'nleq', preview: '≰'}
-    {stroke: '>', name: 'geq', preview: '≥'}
-    {stroke: '>/', name: 'ngeq', preview: '≱'}
-    {stroke: '<<', name: 'll', preview: '≪'}
-    {stroke: '>>', name: 'ngeq', preview: '≫'}
-    {stroke:'<\'',  name: 'langle', preview: '⟨'}
-    {stroke:'>\'',  name: 'rangle', preview: '⟩'}
-    {stroke: '->', name: 'rightarrow', preview: '→'}
-    {stroke: '=>', name: 'Rightarrow', preview: '⇒'}
-    {stroke: '==>', name: 'implies', preview: '⟹'}
-    {stroke: '-->', name: 'longrightarrow', preview: '⟶'}
-    {stroke: 'x->', name: 'xrightarrow',preview: '⟶^_',type: 'section',args: ['optional', 'fixed']}
-    {stroke: '|->', name: 'mapsto', preview: '↦'}
-    {stroke: '|=>', name: 'Mapsto', preview: '↦'}
-    {stroke: '>->', name: 'rightarrowtail', preview: '↣'}
-    {stroke: '->>', name: 'twoheadrightarrow', preview: '↠'}
-    {stroke: '(->', name: 'hookrightarrow', preview: '↪'}
-    {stroke: '~>', name: 'leadsto', preview: '⇝'}
-    {stroke: '<-', name: 'leftarrow', preview: '←'}
-    {stroke: '<<-', name: 'twoheadleftarrow', preview: '↞'}
-    {stroke: '<-<', name: 'leftarrowtail', preview: '↢'}
-    {stroke: '<-)', name: 'hookleftarrow', preview: '↩'}
-    {stroke: '<-|', name: 'mapsfrom', preview: '↤'}
-    {stroke: '<=|', name: 'Mapsfrom', preview: '⤆'}
-    {stroke: '<--', name: 'longleftarrow', preview: '⟵'}
-    {stroke: '<=', name: 'Leftarrow', preview: '⟵'}
-    {stroke: '<==', name: 'impliedby', preview: '⟸'}
+    {index: '|\\|', name: 'aleph', preview: 'ℵ'}
+    {index: ']', name: 'beth', preview: 'ℶ'}
+    {index: '||-', name: 'Vdash', preview: '⊩'}
+    {index: '/\\', name: 'land', preview: '∧'}
+    {index: '\\/', name: 'lor', preview: '∨'}
+    {index: 'prod', name: 'prod', preview: '∏'}
+    {index: 'sum', name: 'sum', preview: '∑'}
+    {index: '{', name: 'in', preview: '∈'}
+    {index: '}', name: 'ni', preview: '∋'}
+    {index: '{/', name: 'notin', preview: '∉'}
+    {index: '(', name: 'subset', preview: '⊂'}
+    {index: '(-', name: 'subseteq', preview: '⊆'}
+    {index: '(=', name: 'subseteqq', preview: '⫅'}
+    {index: ')', name: 'supset', preview: '⊃'}
+    {index: ')-', name: 'supseteq', preview: '⊇'}
+    {index: ')=', name: 'supseteqq', preview: '⫆'}
+    {index: '=/', name: 'neq', preview: '≠'}
+    {index: '==', name: 'equiv', preview: '≡'}
+    {index: '==/', name: 'nequiv', preview: '≢'}
+    {index: '<', name: 'leq', preview: '≤'}
+    {index: '</', name: 'nleq', preview: '≰'}
+    {index: '>', name: 'geq', preview: '≥'}
+    {index: '>/', name: 'ngeq', preview: '≱'}
+    {index: '<<', name: 'll', preview: '≪'}
+    {index: '>>', name: 'ngeq', preview: '≫'}
+    {index:'<\'',  name: 'langle', preview: '⟨'}
+    {index:'>\'',  name: 'rangle', preview: '⟩'}
+    {index: '->', name: 'rightarrow', preview: '→'}
+    {index: '=>', name: 'Rightarrow', preview: '⇒'}
+    {index: '==>', name: 'implies', preview: '⟹'}
+    {index: '-->', name: 'longrightarrow', preview: '⟶'}
+    {index: 'x->', name: 'xrightarrow',preview: '⟶^_',type: 'section',args: ['optional', 'fixed']}
+    {index: '|->', name: 'mapsto', preview: '↦'}
+    {index: '|=>', name: 'Mapsto', preview: '↦'}
+    {index: '>->', name: 'rightarrowtail', preview: '↣'}
+    {index: '->>', name: 'twoheadrightarrow', preview: '↠'}
+    {index: '(->', name: 'hookrightarrow', preview: '↪'}
+    {index: '~>', name: 'leadsto', preview: '⇝'}
+    {index: '<-', name: 'leftarrow', preview: '←'}
+    {index: '<<-', name: 'twoheadleftarrow', preview: '↞'}
+    {index: '<-<', name: 'leftarrowtail', preview: '↢'}
+    {index: '<-)', name: 'hookleftarrow', preview: '↩'}
+    {index: '<-|', name: 'mapsfrom', preview: '↤'}
+    {index: '<=|', name: 'Mapsfrom', preview: '⤆'}
+    {index: '<--', name: 'longleftarrow', preview: '⟵'}
+    {index: '<=', name: 'Leftarrow', preview: '⟵'}
+    {index: '<==', name: 'impliedby', preview: '⟸'}
   ]
 
 section_dictionary = [
@@ -137,7 +137,7 @@ itemSpec =
       name:
         type: 'string'
         minLength: 1
-      stroke:
+      index:
         type: 'string'
         minLength: 1
       preview:
@@ -151,15 +151,15 @@ itemSpec =
     required: ['name']
 
 font_dictionary = [
-    {stroke: 'i', type: 'section', name: 'mathit'}
-    {stroke: 'r', type: 'section', name: 'mathrm'}
-    {stroke: 'd', type: 'section', name: 'mathds'}
-    {stroke: 'b', type: 'section', name: 'mathbb'}
-    {stroke: 'c', type: 'section', name: 'mathcal'}
-    {stroke: 's', type: 'section', name: 'mathsf'}
-    {stroke: 'S', type: 'section', name: 'mathscr'}
-    {stroke: 'B', type: 'section', name: 'mathbf'}
-    {stroke: 'f', type: 'section', name: 'mathfrak'}
+    {index: 'i', type: 'section', name: 'mathit'}
+    {index: 'r', type: 'section', name: 'mathrm'}
+    {index: 'd', type: 'section', name: 'mathds'}
+    {index: 'b', type: 'section', name: 'mathbb'}
+    {index: 'c', type: 'section', name: 'mathcal'}
+    {index: 's', type: 'section', name: 'mathsf'}
+    {index: 'S', type: 'section', name: 'mathscr'}
+    {index: 'B', type: 'section', name: 'mathbf'}
+    {index: 'f', type: 'section', name: 'mathfrak'}
   ]
 
 

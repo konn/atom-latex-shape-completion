@@ -7,39 +7,47 @@ class CompletionView extends SelectListView
     callback: null
     spaced: false
     lastItem: null
+    lastChar: null
     fallback: null
-    withEnter: false
 
     initialize: (items, fallback, callback) ->
         super()
         its = _.deepClone(items)
         for i in its
-            i.stroke ?= i.name
+            i.index ?= i.name
               
         @setItems its
         @fallback = fallback
         @callback = callback
         @addClass('atex-completion-view overlay popover')
-        @filterEditorView.on 'keydown', (e) =>
-            if e.keyCode is 13
-                @withEnter = true
-            else
-                e.abortKeyBinding?()
-    
-        @filterEditorView.on 'keypress', (e) =>
-            item = @getSelectedItem()
-            if e.charCode is 32
-                e.stopImmediatePropagation()
-                e.preventDefault()
-                if item? && @filterEditorView.getText()
-                    @spaced = true
-                    @confirmed(item)
-                else
-                  @cancel()
-            else
-                e.abortKeyBinding?()
 
-    getFilterKey: -> 'stroke'
+        @filterEditorView.on 'keydown', (e) =>
+            if (e.keyCode == 10 || e.keyCode == 13)
+                console.log("Keydown enter: #{e.keyCode}")
+                @lastItem = @getSelectedItem()
+                @lastChar = String.fromCharCode(e.keyCode)
+                if @lastItem?
+                    @confirmed(@lastItem)
+                else
+                    @cancel() if @tryFallback()
+            else if (e.keyCode == 32)
+                @lastItem = @getSelectedItem()
+                @lastChar = String.fromCharCode(e.keyCode)
+                if @lastItem?
+                    @confirmed(@lastItem)
+                else
+                    @cancel() if @tryFallback()
+
+        @filterEditorView.on 'keypress', (e) =>
+            @lastItem = @getSelectedItem()
+            @lastChar = String.fromCharCode(e.charCode || e.keyCode)
+            
+        @filterEditorView.on 'keyup', (e) =>
+            unless @getSelectedItem()?
+                @cancel() if @tryFallback()
+                
+
+    getFilterKey: -> 'index'
 
     show: ->
         @panel ?= atom.workspace.addModalPanel(item: this)
@@ -48,7 +56,10 @@ class CompletionView extends SelectListView
         @storeFocusedElement()
         @focusFilterEditor()
 
-    hide: -> @panel?.hide()
+    hide: ->
+        @fallback = @callback = @lastItem = @lastChar = null
+        @setItems([])
+        @panel?.hide()
 
     clearText: ->
         @withEnter = false
@@ -57,7 +68,7 @@ class CompletionView extends SelectListView
     viewForItem: (item) ->
         item.preview ?= item.name
         """<li>
-            #{item.stroke} 
+            #{item.index} 
             <small style="text-color: gray">
                 #{item.preview}
             </small>
@@ -65,16 +76,18 @@ class CompletionView extends SelectListView
 
     confirmed: (item) ->
         @clearText()
-        @callback?(item, @spaced)
+        @callback?(item)
         @spaced = false
         @hide()
         @restoreFocus()
 
-    cancel: ->
+    tryFallback: () ->
         text = @filterEditorView.getText()
-        if @withEnter && text && @fallback?
-            @fallback text
-        super()
+        console.log("Trying fallback with: #{JSON.stringify({text, item: @lastItem, char: @lastChar})}")
+        if @fallback?
+            return @fallback({text: text, lastItem: @lastItem, lastChar: @lastChar})
+        else
+            return false
 
     cancelled: ->
         @clearText()
