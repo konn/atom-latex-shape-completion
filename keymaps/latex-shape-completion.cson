@@ -1,4 +1,5 @@
 "atom-text-editor[data-grammar~='latex']":
+  "[": "latex-shape-completion:check-display-math"
   ":": "latex-shape-completion:complete-greek"
   ";": "latex-shape-completion:complete-shape"
   "@": "latex-shape-completion:complete-font"
@@ -7,4 +8,4 @@
   "ctrl-c m":  "latex-shape-completion:complete-maketitle"
   "ctrl-c c":  "latex-shape-completion:change"
   "ctrl-c k":  "latex-shape-completion:kill-tex"
-  "backspace": "latex-shape-completion:backspace"
+  "ctrl-j": "latex-shape-completion:newline"

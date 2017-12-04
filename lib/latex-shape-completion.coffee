@@ -1,93 +1,108 @@
 { Disposable, CompositeDisposable } = require 'atom'
+CompletionView = require './latex-shape-completion-view'
+_ = require 'underscore-plus'
+{ config } = require './latex-shape-completion-config'
 
 module.exports = LaTeXShapeCompletion =
+  config: config
   subscriptions: null
-  completer:     null
-  completing:    false
-  
+  completionView: null
+
   insertSnippet: (snippet, editor, cursor = editor.getLastCursor()) ->
     atom.notifications.addInfo("No snippet service available")
 
 
   consumeSnippets: ({insertSnippet}) ->
-    @insertSnippet = (snippet, editor, cursor = editor.getLastCursor()) ->
+    @insertSnippet = (snippet, editor = atom.workspace.getActiveTextEditor(), cursor = editor.getLastCursor()) ->
       insertSnippet(snippet, editor, cursor)
 
-  greek_dictionary:
-    'a':    '\\alpha'
-    'b':    '\\beta'
-    'g':    '\\gamma'
-    'd':    '\\delta'
-    'e':    '\\varepsilon'
-    'e-':   '\\epsilon'
-    'et':   '\\eta'
-    'z':    '\\zeta'
-    't':    '\\tau'
-    'th':   '\\theta'
-    'th-':  '\\vartheta'
-    'i':    '\\iota'
-    'k':    '\\kappa'
-    'l':    '\\lambda'
-    'm':    '\\mu'
-    'n':    '\\nu'
-    'x':    '\\xi'
-    'o':    '\\omega'
-    'p':    '\\pi'
-    'ph':   '\\varphi'
-    'ph-':  '\\phi'
-    'p-':   '\\varpi'
-    'ps':   '\\psi'
-    'r':    '\\rho'
-    's':    '\\sigma'
-    's-':   '\\varsigma'
-    'u':    '\\upsilon'
-    'c':    '\\chi'
+  buildSectionSnippet: ({name, args}, def = @getSelected()) ->
+    counter = 1;
+    unless name?
+      name = "${1:cmd}"
+      counter += 1;
+    snip = "\\\\#{name}"
+    args ?= ["fixed"]
+    for type in args
+        switch type
+          when 'fixed'
+            if def?
+                snip += "{${#{counter}:#{def}}}"
+                def = null
+            else
+                snip += "{${#{counter}:arg}}"
+            counter += 1
+          when 'optional'
+            snip += "${#{counter}:[${#{counter+1}:arg}]}"
+            counter += 2
+    snip += "$0"
+    return snip
 
-  shape_dictionary:
-    '|\\|': '\\aleph'
-    '||-' : '\\Vdash'
-    '/\\':  '\\land'
-    '\\/':  '\\lor'
-    'prod': '\\prod'
+  getSelected: ->
+    sel = atom.workspace.getActiveTextEditor().getSelectedText()
+    return sel if sel
 
-  font_dictionary:
-    'b': {type: 'section', name: 'mathbb'}
-    'c': {type: 'section', name: 'mathcal'}
-    's': {type: 'section', name: 'mathscr'}
-    'B': {type: 'section', name: 'mathbf'}
-    'f': {type: 'section', name: 'mathfrak'}
+  buildEnvSnippet: ({name, args}, def = @getSelected()) ->
+    counter = 1;
+    def ?= ""
+    unless name?
+      begname = "${1:env}"
+      endname = "$1"
+      counter += 1
+    else
+      begname = endname = name
+    snip = "\\\\begin{#{begname}}"
+    args ?= []
+    for type in args
+        switch type
+          when 'fixed'
+            snip += "{${#{counter}:arg}}"
+            counter += 1
+          when 'optional'
+            snip += "${#{counter}:[${#{counter+1}:arg}]}"
+            counter += 2
+    snip += "\n  #{def}$0\n"
+    snip += "\\\\end{#{endname}}"
+    return snip
 
-  insert: (inp, editor) ->
+  isString: (inp) ->
     type = Object.prototype.toString.call(inp).slice(8, -1).toLowerCase()
-    if (typeof(inp) == 'string' || inp instanceof String || type == 'string')
+    return (typeof(inp) is 'string' || inp instanceof String || type is 'string')
+    
+
+  insert: (inp, editor = atom.workspace.getActiveTextEditor(), postfix = "") ->
+    if @isString(inp)
         editor.insertText(inp)
         return false
     else
+      inp.type ?= 'maketitle'
       switch inp?.type
+        when 'text'
+            text = "#{inp.name}#{postfix}"
+            editor.insertText(text)
+            return false
         when 'maketitle'
-            editor.insertText("\\" + inp.name)
+            if inp.name?
+                editor.insertText "\\#{inp.name}#{postfix}"
+            else
+                @insertSnippet "\\\\${1:maketitle} $0", editor
             return false
         when 'section'
-            @insertSnippet("\\\\" + inp.name + "{${1:text}}$0", editor)
+            @insertSnippet(@buildSectionSnippet(inp), editor)
             return true
         when 'large'
-            @insertSnippet("{\\\\" + inp.name + " $0}", editor)
+            if (ph = editor.getSelectedText())
+                editor.insertText "{\\#{inp.name} #{ph}}"
+            else
+                @insertSnippet("{\\\\#{inp.name} $0}", editor)
             return true
-        when 'begin'
-            @insertSnippet """
-                           \\\\begin{${1:theorem}}
-                             $0
-                           \\\\end{$1}
-                           """,
-                           editor
+        when 'begin', 'environment'
+            @insertSnippet @buildEnvSnippet(inp), editor
             return true
-        else
-            throw "Unknown Error"
-                
-        
-        
 
   activate: (state) ->
+    editor = atom.workspace.getActiveTextEditor()
+
     # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
     @subscriptions = new CompositeDisposable
 
@@ -102,94 +117,30 @@ module.exports = LaTeXShapeCompletion =
       'latex-shape-completion:change': => @change(),
       'latex-shape-completion:kill-tex': => @kill_tex(),
       'latex-shape-completion:backspace': (e) => @backspace e
-          
-    editor = atom.workspace.getActiveTextEditor()
-    editor?.onDidChangeCursorPosition => @dispose_completer()
-    editor?.onDidChangeSelectionRange => @dispose_completer()
+      'latex-shape-completion:check-display-math': (e) => @check_display_math(e)
+      'latex-shape-completion:newline': (e) => @newline(e)
 
-  completion_name: "latex-shape-completion.completion"
-
-  backspace: (e) ->
+  check_display_math: (evt) ->
     editor = atom.workspace.getActiveTextEditor()
     view = atom.views.getView editor
-    if @completer
-        e.charCode = 127
-        @completer e
+    pos = editor.getCursorBufferPosition()
+    ran = [pos.translate([0, -1]), pos]
+    prec = editor.getTextInBufferRange(ran)
+    if prec is '\\'
+        evt.stopImmediatePropagation()
+        evt.preventDefault()
+        editor.setTextInBufferRange ran, '', undo: 'skip'
+        @insertSnippet "\\\\[\n $0\n\\\\]", editor
     else
-      e.abortKeyBinding()
+        evt.abortKeyBinding()
 
-  build_trie: (dic) ->
-    trie = {}
+  build_items: (dic) ->
+    items = []
     for key, val of dic
-      targ = trie
-      while key.length > 0
-        targ = targ[key[0]] ?= {value: null, children: null}
-        if key.length == 1
-          targ.value = val
-        else
-          targ.value ?= val
-          targ = targ.children ?= {}
-        key = key.slice(1)
-    return trie               
-
-  dispose_completer: ->
-    if @completer
-      editor = atom.workspace.getActiveTextEditor()
-      view = atom.views.getView editor
-      view.removeEventListener 'keypress', @completer
-      @completer = null
-
-  catch_next_key_with: (dic, ign = null, mark = null, prev = []) ->
-    editor = atom.workspace.getActiveTextEditor()
-    view = atom.views.getView editor
-    disposeDisposer = editor?.onDidChangeCursorPosition (e) =>
-        atom.beep()
-        @dispose_completer()
-    @completer = (evt) =>
-      char = String.fromCharCode(evt.charCode)
-      l = dic?[char]
-      evt.stopImmediatePropagation()
-      evt.preventDefault()
-      @dispose_completer()
-      disposeDisposer.dispose()
-      console.log('Input: ' + JSON.stringify([char, dic, mark, prev, evt.charCode]));
-
-      if ign && String(char) == String(ign)
-        @insert(ign, editor)
-      else if evt.charCode == 127
-        if (prev?.length > 0)
-            if mark
-                editor.setTextInBufferRange mark, '', undo: 'skip'
-            mark_ = null
-            [_, dic_] = prev.shift()
-            psymb = prev[0]?[0]
-            if psymb
-                start = editor.getCursorBufferPosition()
-                @insert(psymb, editor)
-                end   = editor.getCursorBufferPosition()
-                mark_ = [start,end]
-            @catch_next_key_with dic_, null, mark_, prev
-        else
-            atom.beep()
-      else if (!l) || l == undefined || l == null
-        atom.beep()
-        @insert(char, editor)
-      else
-        mark_ = null
-        isSnippet = false
-        if symb = l.value
-          if mark
-            editor.setTextInBufferRange mark, '', undo: 'skip'
-          start = editor.getCursorBufferPosition()
-          isSnippet = @insert(symb, editor)
-          end   = editor.getCursorBufferPosition()
-          mark_ = [start,end]
-          atom.workspace.add
-        unless isSnippet
-          prev.unshift [symb, dic]
-          @catch_next_key_with l.children, null, mark_, prev
-
-    view.addEventListener 'keypress', @completer
+        val_ = _.deepClone(val)
+        val_.index = key
+        items.push val_
+    return items
 
   deactivate: ->
     @subscriptions.dispose()
@@ -214,30 +165,76 @@ module.exports = LaTeXShapeCompletion =
     if math
       switch last
         when "punctuation.definition.string.end.latex"
-          math = delim2 == "$$" || delim2 == "\\]"
+          math = delim2 is "$$" || delim2 is "\\]"
         when "punctuation.definition.string.end.tex"
-          math = delim1 == "$"
+          math = delim1 is "$"
     return math
 
-  make_completer: (trigger, dic, e) ->
+  show_completion_view: (items, fallback, callback) ->
+    if @completionView?.hasParent()
+        @completionView.detach()
+        @completionView = null
+    @completionView ?= new CompletionView items, fallback, callback
+    @completionView.show()
+    @completionView.focusFilterEditor()
+
+
+  make_stroke_completer: (trigger, dic, e) ->
     editor = atom.workspace.getActiveTextEditor()
-    if @is_math() && ! @completer
-      @catch_next_key_with(@build_trie(dic), trigger)
+    view = atom.views.getView editor
+    if @is_math()
+        items = _.deepClone(dic)
+        fallback = ({text, lastItem, lastChar}) =>
+            if (lastChar is trigger) && (text is trigger || text.legth is 0)
+                editor.insertText(trigger)
+            else
+                editor.transact () =>
+                    @insert(lastItem, editor, "")
+                    evt = atom.keymaps.constructor.buildKeydownEvent(lastChar, {target: view})
+                    if view.dispatchEvent(evt)
+                        editor.insertText(lastChar) 
+            return true
+        callback = (inp, postfix = "") => @insert(inp, editor, postfix)
+        @show_completion_view items, fallback, callback
     else
-      @dispose_completer()
-      e.abortKeyBinding()
+        e.abortKeyBinding()
 
-  complete_shape: (e) -> @make_completer ";", @shape_dictionary, e
+  make_snippet_completer: (type, dic, e) ->
+    editor = atom.workspace.getActiveTextEditor()
+    items = _.deepClone(dic)
+    for key, val of items
+        val.type = type
+    fallback = ({text, lastItem, lastChar}) =>
+      console.log("falling back with: #{JSON.stringify({text, lastItem: lastItem, lastChar: lastChar})}")
+      if text?.length > 0 && (lastChar is "\r" || lastChar is " ")
+        @insert({type: type, name: text}, editor, "")
+        return true
+      else
+        return false
+    callback = (inp, postfix = "") =>
+      @insert(inp, editor, postfix)
 
-  complete_greek: (e) -> @make_completer ":", @greek_dictionary, e
+    @show_completion_view items, fallback, callback
 
-  complete_font: (e) -> @make_completer "@", @font_dictionary, e
+  get_dictionary: (name) ->
+    atom.config.get("latex-shape-completion.#{name}_dictionary")
 
-  complete_section: -> return
+  complete_shape: (e) -> @make_stroke_completer ";", @get_dictionary("shape") , e
 
-  complete_maketitle: -> return
+  complete_greek: (e) -> @make_stroke_completer ":", @get_dictionary("greek") , e
 
-  insert_begin: -> return
+  complete_font: (e) -> @make_stroke_completer "@", @get_dictionary("font"), e
+
+  complete_section: (e) -> @make_snippet_completer 'section', @get_dictionary("section"), e
+
+  insert_begin: (e) -> @make_snippet_completer 'environment', @get_dictionary("envrionment"), e
+
+  complete_maketitle: (e) -> @make_snippet_completer 'maketitle', @get_dictionary("maketitle"), e
+
+
+  newline: (e) ->
+    @insert('\\\\') if @is_math()
+    e.abortKeyBinding()
 
   change: -> return
 
