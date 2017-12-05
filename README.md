@@ -18,7 +18,7 @@ You can invoke environment completion by <kbd>C-c C-b</kbd>:
 You can invoke section completion by <kbd>C-c C-b</kbd>:
 ![Section Completion](https://raw.github.com/konn/atom-latex-shape-completion/resources/gifs/section-completion.gif)
 
-## Smart Newline {#smart-newline}
+## Smart Newline
 With <kbd>Cmd-Return</kbd> (in macOS) or <kbd>Ctrl-Enter</kbd> (others), Atom automatically
 inserts `\\`, ``\item`` or simple newline according to its context:
 ![Smart Newline](https://raw.github.com/konn/atom-latex-shape-completion/resources/gifs/smart-newline.gif)
