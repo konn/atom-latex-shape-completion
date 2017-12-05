@@ -1,7 +1,9 @@
 { Disposable, CompositeDisposable } = require 'atom'
 CompletionView = require './latex-shape-completion-view'
+RegexIterator = require './latex-shape-completion-iterator'
 _ = require 'underscore-plus'
-{ config } = require './latex-shape-completion-config'
+settings = require './latex-shape-completion-config'
+config = settings.config
 
 module.exports = LaTeXShapeCompletion =
   config: config
@@ -13,7 +15,7 @@ module.exports = LaTeXShapeCompletion =
 
 
   consumeSnippets: ({insertSnippet}) ->
-    @insertSnippet = (snippet, editor = atom.workspace.getActiveTextEditor(), cursor = editor.getLastCursor()) ->
+    @insertSnippet = (snippet, editor = @activeEditor(), cursor = editor.getLastCursor()) ->
       insertSnippet(snippet, editor, cursor)
 
   buildSectionSnippet: ({name, args, postfix}, def = @getSelected()) ->
@@ -45,6 +47,8 @@ module.exports = LaTeXShapeCompletion =
     snip += postfix if postfix?
     snip += "$0"
     return snip
+
+  activeEditor: -> atom.workspace.getActiveTextEditor()
 
   getSelected: ->
     sel = atom.workspace.getActiveTextEditor().getSelectedText()
@@ -225,7 +229,10 @@ module.exports = LaTeXShapeCompletion =
     @show_completion_view items, fallback, callback
 
   get_dictionary: (name) ->
-    atom.config.get("latex-shape-completion.#{name}_dictionary")
+    dic = atom.config.get("latex-shape-completion.#{name}_dictionary") || []
+    def = (settings["default_#{name}_dictionary"] || []).filter (i) ->
+        !(dic.some (j) -> j.index == i.index)
+    return dic.concat(def)
 
   complete_shape: (e) -> @make_stroke_completer ";", @get_dictionary("shape") , e
 
@@ -235,14 +242,74 @@ module.exports = LaTeXShapeCompletion =
 
   complete_section: (e) -> @make_snippet_completer 'section', @get_dictionary("section"), e
 
-  insert_begin: (e) -> @make_snippet_completer 'environment', @get_dictionary("envrionment"), e
+  insert_begin: (e) -> @make_snippet_completer 'environment', @get_dictionary("environment"), e
 
   complete_maketitle: (e) -> @make_snippet_completer 'maketitle', @get_dictionary("maketitle"), e
 
+  getScopes: (editor = @activeEditor()) ->
+    editor.getLastCursor().getScopeDescriptor().getScopesArray()
 
+  getCurrentEnvironmentAt: (pos = @activeEditor().getCursorBufferPosition()) ->
+    re = /\\(begin|end)\{([^{}]+?)\}/
+    iter = new RegexIterator @activeEditor().getBuffer(), pos, re
+    targ = null
+    levels = []
+    targetRange = null
+    until iter.finished || !(result = iter.scan()) || targ
+        [txt, begORend, env] = result.match
+        inside = result.range.start.translate([0, begORend.length])
+        scopes = @activeEditor().scopeDescriptorForBufferPosition(inside).getScopesArray()
+        scope  = scopes[scopes.length - 1]
+        
+        if scope is "support.function.be.latex"
+          switch begORend
+            when 'begin'
+              if levels.length == 0
+                  targ = env
+                  targetRange = result.range
+                  break
+              else
+                  levels.pop()
+            when 'end'
+              levels.push env
+    return {name: targ, envStart: targetRange.end}
+
+  countAmpersands: (buf, rowStart, rowEnd) ->
+    range = [[rowStart, 0], [rowEnd, buf.lineLengthForRow(rowEnd)]]
+    count = 0
+    console.log("searching in: #{JSON.stringify range}")
+    for line in buf.getTextInRange(range).split("\\\\")
+        count = Math.max(count, (line.match(/\&/g) || []).length)
+    return count
+
+  # Smart newline.
   newline: (e) ->
-    @insert('\\\\') if @is_math()
-    e.abortKeyBinding()
+    editor = @activeEditor()
+    {name, envStart} = @getCurrentEnvironmentAt()
+    maths = @get_dictionary("display_math")
+    lists = @get_dictionary("list_env")
+    console.log("newline: #{JSON.stringify res: {name, envStart} || [], maths: maths, lists: lists}")
+    console.log("search math: #{JSON.stringify maths.find((i) -> i.name == name)}")
+    console.log("search list: #{JSON.stringify lists.find((i) -> i.name == name)}")
+    if (env = maths.find((i) -> i.name == name))?.multiline
+        console.log "math detected!"
+        @insert("\\\\")
+        @activeEditor().insertNewline()
+        if env.alignable
+            rowStart = envStart.row
+            rowEnd   = editor.getCursorBufferPosition().row
+            amps = @countAmpersands editor.getBuffer(), rowStart, rowEnd
+            places = ("${#{i}: }" for i in [1..amps+1])
+            cols = places.join(" & ")
+            @insertSnippet cols
+    else if (env = lists.find((i) -> i.name == name))?
+        console.log "list detected!"
+        @activeEditor().insertNewline()
+        brack = ""
+        brack = "[${1:term}]" if env.hasOptionalItemArg
+        @insertSnippet("\\\\item#{brack} $0")
+    else
+        e.abortKeyBinding()
 
   change: -> return
 

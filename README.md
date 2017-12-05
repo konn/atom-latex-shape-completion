@@ -18,10 +18,20 @@ You can invoke environment completion by <kbd>C-c C-b</kbd>:
 You can invoke section completion by <kbd>C-c C-b</kbd>:
 ![Section Completion](https://raw.github.com/konn/atom-latex-shape-completion/resources/gifs/section-completion.gif)
 
+## Smart Newline
+With <kbd>Cmd-Return</kbd> (in macOS) or <kbd>Ctrl-Enter</kbd> (others), Atom automatically
+inserts `\\`, ``\item`` or simple newline according to its context:
+![Smart Newline](https://raw.github.com/konn/atom-latex-shape-completion/resources/gifs/smart-newline.gif)
+
 ## Other features
 * `{\large ...}`-style and `\maketitle`-style completion is also supported.
 
 # TODOs
+* Avoid *shadowing* of names: one wants to input `\dot{...}`, but it matches `\documentclass{...}`!
 * Something like `YaTeX-change-*` to change commands/parens/environments.
 * Something like `YaTeX-kill-*` to smartly remove commands/parens/environments.
-* Smart newlines: we want to append `\\` or `\item` automatically by <kbd>C-j</kbd> or <kbd>M-Enter</kbd>.
+* Accent completion by <kbd>C-c C-a</kbd>
+* Something like `YaTeX-goto-corresponding-*` by <kbd>C-c g</kbd>.
+* Argument number specification via <kbd>C-u 2</kbd> or so.
+* `\end{...}`-completion by <kbd>C-c e<kbd>  
+  `latextools` already provides it, but doesn't care for whether it's already closed or not.

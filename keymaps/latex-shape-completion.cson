@@ -8,4 +8,9 @@
   "ctrl-c m":  "latex-shape-completion:complete-maketitle"
   "ctrl-c c":  "latex-shape-completion:change"
   "ctrl-c k":  "latex-shape-completion:kill-tex"
-  "ctrl-j": "latex-shape-completion:newline"
+
+"body.platform-darwin atom-text-editor[data-grammar~='latex']":
+  "cmd-enter": "latex-shape-completion:newline"
+
+"body:not(.platform-darwin) atom-text-editor[data-grammar~='latex']":
+  "ctrl-enter": "latex-shape-completion:newline"
